@@ -17,8 +17,13 @@ from support import *
 from monster import Monster
 
 class Game:
-	# general 
+	"""
+	A class to represent the main game logic and state management.
+	"""
 	def __init__(self):
+		"""
+		Initialize the game state, including setting up the display, clock, player monsters, and various game groups.
+		"""
 		pygame.init()
 		self.display_surface = pygame.display.set_mode((WINDOW_WIDTH, WINDOW_HEIGHT))
 		pygame.display.set_caption('Pokemon Pygame')
@@ -72,6 +77,9 @@ class Game:
 
 
 	def import_assets(self):
+		"""
+		Import various game assets such as maps, graphics, fonts, and audio.
+		"""
 		self.tmx_maps = tmx_importer('data', 'maps')
 
 		self.overworld_frames = {
@@ -100,6 +108,13 @@ class Game:
 		self.audio = audio_importer( 'audio')
 
 	def setup(self, tmx_map, player_start_pos):
+		"""
+		Setup the game state based on a given TMX map and player starting position.
+
+		Args:
+			tmx_map (str): The TMX map to setup.
+			player_start_pos (str): The player's starting position on the map.
+		"""
 		# clear the map
 		for group in (self.all_sprites, self.collision_sprites, self.transition_sprites, self.character_sprites):
 			group.empty()
@@ -166,6 +181,9 @@ class Game:
 
 	# dialog system
 	def input(self):
+		"""
+		Handle player input for interactions such as starting dialogs and opening the monster index.
+		"""
 		if not self.dialog_tree and not self.battle:
 			keys = pygame.key.get_just_pressed()
 			if keys[pygame.K_SPACE]:
@@ -181,10 +199,22 @@ class Game:
 				self.player.blocked = not self.player.blocked
 
 	def create_dialog(self, character):
+		"""
+		Create a dialog tree for interaction with a character.
+
+		Args:
+			character (Character): The character to interact with.
+		"""
 		if not self.dialog_tree:
 			self.dialog_tree = DialogTree(character, self.player, self.all_sprites, self.fonts['dialog'], self.end_dialog)
 
 	def end_dialog(self, character):
+		"""
+		End the current dialog and handle post-dialog actions such as healing monsters or starting battles.
+
+		Args:
+			character (Character): The character involved in the dialog.
+		"""
 		self.dialog_tree = None
 		if character.nurse:
 			for monster in self.player_monsters.values():
@@ -211,6 +241,9 @@ class Game:
 
 	# transition system
 	def transition_check(self):
+		"""
+		Check if the player has entered a transition area and initiate the transition process.
+		"""
 		sprites = [sprite for sprite in self.transition_sprites if sprite.rect.colliderect(self.player.hitbox)]
 		if sprites:
 			self.player.block()
@@ -218,6 +251,12 @@ class Game:
 			self.tint_mode = 'tint'
 
 	def tint_screen(self, dt):
+		"""
+		Handle the screen tinting effect during transitions.
+
+		Args:
+			dt (float): Delta time to ensure smooth transitions.
+		"""
 		if self.tint_mode == 'untint':
 			self.tint_progress -= self.tint_speed * dt
 
@@ -238,6 +277,12 @@ class Game:
 		self.display_surface.blit(self.tint_surf, (0,0))
 	
 	def end_battle(self, character):
+		"""
+		End the current battle and handle post-battle actions such as dialog and evolution.
+
+		Args:
+			character (Character): The character involved in the battle.
+		"""
 		self.audio['battle'].stop()
 		self.transition_target = 'level'
 		self.tint_mode = 'tint'
@@ -249,6 +294,9 @@ class Game:
 			self.check_evolution()
 
 	def check_evolution(self):
+		"""
+		Check if any player monsters can evolve and initiate the evolution process if applicable.
+		"""
 		for index, monster in self.player_monsters.items():
 			if monster.evolution:
 				if monster.level == monster.evolution[1]:
@@ -260,6 +308,9 @@ class Game:
 			self.audio['overworld'].play(-1)
 
 	def end_evolution(self):
+		"""
+		End the evolution process and unblock the player.
+		"""
 		self.evolution = None
 		self.player.unblock()
 		self.audio['evolution'].stop()
@@ -267,11 +318,17 @@ class Game:
 
 	# monster encounters 
 	def check_monster(self):
+		"""
+		Check if the player has encountered a wild monster and initiate the encounter process if applicable.
+		"""
 		if [sprite for sprite in self.monster_sprites if sprite.rect.colliderect(self.player.hitbox)] and not self.battle and self.player.direction:
 			if not self.encounter_timer.active:
 				self.encounter_timer.activate()
 
 	def monster_encounter(self):
+		"""
+		Initiate a monster encounter when the player enters a monster patch.
+		"""
 		sprites = [sprite for sprite in self.monster_sprites if sprite.rect.colliderect(self.player.hitbox)]
 		if sprites and self.player.direction:
 			self.encounter_timer.duration = randint(800, 2500)

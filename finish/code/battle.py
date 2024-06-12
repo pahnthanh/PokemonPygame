@@ -7,9 +7,43 @@ from timer import Timer
 from random import choice
 
 class Battle:
-	# main
+	"""
+	Class representing a battle between player's monsters and opponent's monsters.
+
+	Attributes:
+		display_surface (Surface): The main display surface for rendering the game.
+		bg_surf (Surface): The background surface for the battle scene.
+		monster_frames (dict): Dictionary of frames for different monsters.
+		fonts (dict): Dictionary of fonts for rendering text.
+		monster_data (dict): Dictionary holding player and opponent monsters.
+		battle_over (bool): Flag indicating if the battle is over.
+		end_battle (callable): Function to call when the battle ends.
+		character (Character): The character involved in the battle.
+		sounds (dict): Dictionary of sounds for battle actions.
+		timers (dict): Dictionary of timers for various battle actions.
+		battle_sprites (BattleSprites): Group containing all battle sprites.
+		player_sprites (Group): Group containing player sprites.
+		opponent_sprites (Group): Group containing opponent sprites.
+		current_monster (MonsterSprite): The currently active monster.
+		selection_mode (str): The current selection mode in the battle.
+		selected_attack (str): The currently selected attack.
+		selection_side (str): The side ('player' or 'opponent') for target selection.
+		indexes (dict): Dictionary of indexes for navigating menu options.
+	"""
 	def __init__(self, player_monsters, opponent_monsters, monster_frames, bg_surf, fonts, end_battle, character, sounds):
-		# general
+		"""
+		Initialize the Battle class.
+
+		Args:
+			player_monsters (dict): Player's monsters.
+			opponent_monsters (dict): Opponent's monsters.
+			monster_frames (dict): Dictionary of monster frames.
+			bg_surf (Surface): Background surface for the battle.
+			fonts (dict): Dictionary of fonts for text rendering.
+			end_battle (callable): Function to call when the battle ends.
+			character (Character): Character involved in the battle.
+			sounds (dict): Dictionary of sounds for battle actions.
+		"""
 		self.display_surface = pygame.display.get_surface()
 		self.bg_surf = bg_surf
 		self.monster_frames = monster_frames
@@ -44,7 +78,9 @@ class Battle:
 		}
 
 		self.setup()
-
+		"""
+		Setup the initial state of the battle by creating monster sprites for the battle.
+		"""
 	def setup(self):
 		for entity, monster in self.monster_data.items():
 			for index, monster in {k:v for k,v in monster.items() if k <= 2}.items():
@@ -55,6 +91,15 @@ class Battle:
 				del self.monster_data['opponent'][i]
 
 	def create_monster(self, monster, index, pos_index, entity):
+		"""
+		Create a monster sprite for the battle.
+
+		Args:
+			monster (Monster): The monster to create.
+			index (int): The index of the monster.
+			pos_index (int): The position index for placing the monster.
+			entity (str): The entity ('player' or 'opponent') the monster belongs to.
+		"""
 		monster.paused = False
 		frames = self.monster_frames['monsters'][monster.name]
 		outline_frames = self.monster_frames['outlines'][monster.name]
@@ -78,6 +123,9 @@ class Battle:
 		MonsterStatsSprite(monster_sprite.rect.midbottom + vector(0,20), monster_sprite, (150,48), self.battle_sprites, self.fonts['small'])
 
 	def input(self):
+		"""
+		Handle user input for navigating battle options.
+		"""
 		if self.selection_mode and self.current_monster:
 			keys = pygame.key.get_just_pressed()
 
@@ -144,12 +192,18 @@ class Battle:
 					self.selection_mode = 'general'
 
 	def update_timers(self):
+		"""
+		Update all timers in the battle.
+		"""
 		for timer in self.timers.values():
 			timer.update()
 
 
 	# battle system
 	def check_active(self):
+		"""
+		Check if any monster is ready to perform an action based on its initiative.
+		"""
 		for monster_sprite in self.player_sprites.sprites() + self.opponent_sprites.sprites():
 			if monster_sprite.monster.initiative >= 100:
 				monster_sprite.monster.defending = False
@@ -163,6 +217,12 @@ class Battle:
 					self.timers['opponent delay'].activate()
 
 	def update_all_monsters(self, option):
+		"""
+		Pause or resume all monsters based on the provided option.
+		
+		Args:
+			option (str): Either 'pause' or 'resume'.
+		"""
 		for monster_sprite in self.player_sprites.sprites() + self.opponent_sprites.sprites():
 			monster_sprite.monster.paused = True if option == 'pause' else False
 
@@ -220,11 +280,18 @@ class Battle:
 				monster_sprite.delayed_kill(new_monster_data)
 
 	def opponent_attack(self):
+		"""
+		Make the opponent's monster perform an attack.
+		"""
+
 		ability = choice(self.current_monster.monster.get_abilities())
 		random_target = choice(self.opponent_sprites.sprites()) if ATTACK_DATA[ability]['target'] == 'player' else choice(self.player_sprites.sprites())
 		self.current_monster.activate_attack(random_target, ability)
 
 	def check_end_battle(self):
+		"""
+		Check if the battle is over by seeing if there are any monsters left on either side.
+		"""
 		# opponents have been defeated 
 		if len(self.opponent_sprites) == 0 and not self.battle_over:
 			self.battle_over = True
@@ -240,6 +307,9 @@ class Battle:
 
 	# ui 
 	def draw_ui(self):
+		"""
+		Draw the UI elements such as health bars, abilities, and menus.
+		"""
 		if self.current_monster:
 			if self.selection_mode == 'general':
 				self.draw_general()
@@ -249,6 +319,9 @@ class Battle:
 				self.draw_switch()
 
 	def draw_general(self):
+		"""
+		Draw the general action menu.
+		"""
 		for index, (option, data_dict) in enumerate(BATTLE_CHOICES['full'].items()):
 			if index == self.indexes['general']:
 				surf = self.monster_frames['ui'][f"{data_dict['icon']}_highlight"]
@@ -258,7 +331,9 @@ class Battle:
 			self.display_surface.blit(surf, rect)
 
 	def draw_attacks(self):
-		# data
+		"""
+		Draw the attack selection menu.
+		"""
 		abilities = self.current_monster.monster.get_abilities(all = False)
 		width, height = 150, 200
 		visible_attacks = 4
@@ -297,7 +372,9 @@ class Battle:
 				self.display_surface.blit(text_surf, text_rect)
 
 	def draw_switch(self):
-		# data 
+		"""
+		Draw the monster switch menu.
+		"""
 		width, height = 300, 320
 		visible_monsters = 4
 		item_height = height / visible_monsters

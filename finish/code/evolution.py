@@ -2,7 +2,21 @@ from settings import *
 from timer import Timer
 
 class Evolution:
+	"""
+	Manages the evolution animation of a monster.
+	"""
 	def __init__(self, frames, start_monster, end_monster, font, end_evolution, star_frames):
+		"""
+		Initialize the evolution process with the necessary frames, text, and timers.
+
+		Parameters:
+		frames (dict): Dictionary containing animation frames for monsters.
+		start_monster (str): Name of the starting monster.
+		end_monster (str): Name of the evolved monster.
+		font (pygame.font.Font): Font used for rendering text.
+		end_evolution (function): Function to call when the evolution ends.
+		star_frames (list): List of frames for the star animation.
+		"""
 		self.display_surface = pygame.display.get_surface()
 		self.start_monster_surf = pygame.transform.scale2x(frames[start_monster]['idle'][0])
 		self.end_monster_surf = pygame.transform.scale2x(frames[end_monster]['idle'][0])
@@ -30,6 +44,12 @@ class Evolution:
 		self.end_text_surf = font.render(f'{start_monster} evolved into {end_monster}', False, COLORS['black'])
 
 	def display_stars(self, dt):
+		"""
+		Display the star animation during the evolution.
+
+		Parameters:
+		dt (float): Delta time to manage animation speed.
+		"""
 		self.frame_index += 20 * dt
 		if self.frame_index < len(self.star_frames):
 			frame = self.star_frames[int(self.frame_index)]
@@ -37,6 +57,12 @@ class Evolution:
 			self.display_surface.blit(frame, rect)
 
 	def update(self, dt):
+		"""
+		Update the evolution process, including timers and rendering frames.
+
+		Parameters:
+		dt (float): Delta time to manage animation speed.
+		"""
 		for timer in self.timers.values():
 			timer.update()
 
